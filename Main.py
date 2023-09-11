@@ -21,14 +21,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setWindowIcon(QIcon('{}/icons/shotgun.png'.format(CURRENT_PATH)))
 
         self.sg = ShotgunCon()
+        # setting the username manually
         self.user = 'alam'
 
         project_details = self.sg.get_projects(user_name=self.user)
 
         self.last_publish = None
+        self.total_publishes = 0
+
         self.recent_version = None
         self.total_versions = 0
-        self.total_publishes = 0
+
         self.task_id = None
         self.proj_id = None
 
@@ -52,10 +55,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
 
         self.task_list_listWidget.clear()
-        self.task_details_treeWidget.clear()
+        self.work_path.clear()
+        self.publish_path.clear()
+
         self.proj_id = self.comboBox.currentData()
         sg_data = self.sg.find_active_task(self.comboBox.currentData(), user_name=self.user)
         # pprint(sg_data)
+
         for task in sg_data:
 
             # Creates a QListWidgetItem
@@ -85,6 +91,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.task_list_listWidget.customContextMenuRequested.connect(self.open_context)
 
     def open_context(self, position):
+        """
+        opens a context menu at the position of click with open current version and open last publish
+        :param position:
+        :return:
+        """
         item = self.task_list_listWidget.itemAt(position)
         react = self.task_list_listWidget.visualItemRect(item)
         if item is not None:
@@ -103,12 +114,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def open_file(self, path):
         """
-        opens the file in path
+        opens the file in path if path exits
         """
-        try:
-            os.startfile(path)
-        except Exception as e:
-            QMessageBox.information(self, "Message", f"Unable to open file")
+        if path is not None:
+            try:
+                os.startfile(path)
+            except Exception as e:
+                QMessageBox.information(self, "Message", f"Unable to open file")
+        else :
+            QMessageBox.information(self, "Message", f"No file Found")
 
     def get_selected_task(self, data):
         """
@@ -118,19 +132,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         item_data = data.data(Qt.UserRole)
         self.task_id = item_data.get('id')
-        self.path_cls = GetPaths('C:/Users/s8/OneDrive - Autodesk/Desktop/checking')
+
+        # setting the path manually
+        self.path_cls = GetPaths('C:/Users/s8/OneDrive - Autodesk/Desktop/Publish')
+
         paths = self.path_cls.get_scene_path(item_data)
 
-        self.task_details_treeWidget.clear()
-        __qtreewidgetitem = QTreeWidgetItem()
-        __qtreewidgetitem.setText(0, f"Paths")
-        self.task_details_treeWidget.setHeaderItem(__qtreewidgetitem)
-
-        self.work_path = QTreeWidgetItem(self.task_details_treeWidget)
-        self.work_path.setText(0, "Work Path")
-
-        self.publish_path = QTreeWidgetItem(self.task_details_treeWidget)
-        self.publish_path.setText(0, "Publish Path")
+        self.work_path.clear()
+        self.publish_path.clear()
 
         if paths[0]:
             paths[0].sort(reverse=True)
@@ -167,59 +176,58 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         if item.text(0) == 'Publish Path':
             context_menu = QMenu(self)
-            publish_action = QAction("Publish Last Version", self)
+            publish_action = QAction("Publish current Version", self)
             context_menu.addAction(publish_action)
             publish_action.triggered.connect(self.publish_version)
             context_menu.exec_(self.task_details_treeWidget.mapToGlobal(position))
 
-        if item.parent() == self.publish_path or item.parent() == self.work_path:
+        if item.parent() in [self.publish_path, self.work_path]:
             context_menu = QMenu(self)
             open_file = QAction("Open", self)
             context_menu.addAction(open_file)
             open_file.triggered.connect(lambda: self.open_file(item.text(0)))
             context_menu.exec_(self.task_details_treeWidget.mapToGlobal(position))
 
-
-
-    def publish_version(self):
-        file_name = 'example_publish'
-        publish = self.total_publishes+1
-        #if publish == 1:
-            #os.makedirs(self.path_cls.publish_path)
-        print(self.recent_version)
-        types = self.recent_version.split('.')
-        name = "{}_v{:03d}.{}".format(file_name, publish, types[len(types)-1])
-        path = os.path.join(self.path_cls.publish_path, name)
-        self.last_publish = path
-        with open(self.recent_version, 'rb') as source_file, open(path, 'wb') as destination_file:
-            # Read and write in chunks to handle large files efficiently
-            chunk_size = 1024  # You can adjust the chunk size as needed
-            while True:
-                chunk = source_file.read(chunk_size)
-                if not chunk:
-                    break
-                destination_file.write(chunk)
-        # with open(self.recent_version, "r") as file:
-        #     file_data = file.read()
-        # print(file_data)
-        # with open(path, "w") as file:
-        #     file.write(file_data)
-        self.sg.publish_tosg(name, path, self.task_id, self.proj_id)
-        #pass
-
     def new_version(self):
         """
         function to create a new version file
         :return:
         """
+        file_type = 'txt'
         file_name = 'example'
         version = self.total_versions+1
         if version == 1:
             os.makedirs(self.path_cls.scene_path)
-        name = "{}_v{:03d}.txt".format(file_name, version)
+        name = "{}_v{:03d}.{}".format(file_name, version, file_type)
         path = os.path.join(self.path_cls.scene_path, name)
         with open(path, "w") as file:
             file.write("demo\n")
+
+    def publish_version(self):
+        file_name = 'demo_publish'
+        publish = self.total_publishes+1
+        if publish == 1:
+            os.makedirs(self.path_cls.publish_path)
+        #print(self.recent_version)
+        file_type = self.recent_version.split('.')
+        name = "{}_pv{:03d}.{}".format(file_name, publish, file_type[len(file_type)-1])
+        path = os.path.join(self.path_cls.publish_path, name)
+        self.last_publish = path
+        with open(self.recent_version, 'rb') as source_file, open(path, 'wb') as destination_file:
+
+            chunk_size = 1024
+            while True:
+                chunk = source_file.read(chunk_size)
+                if not chunk:
+                    break
+                destination_file.write(chunk)
+        details = {
+            'name': name,
+            'path': path,
+            'task_id': self.task_id,
+            'project_id': self.proj_id
+        }
+        self.sg.publish_tosg(details)
 
 
 if __name__ == '__main__':

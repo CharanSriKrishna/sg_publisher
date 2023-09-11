@@ -35,7 +35,7 @@ class ShotgunCon:
 
     def get_shotgun_user_id(self, user_name=getpass.getuser()):
         """
-
+        function to get the user id from the username
         :param user_name:
         :return:
         """
@@ -47,7 +47,7 @@ class ShotgunCon:
 
     def find_active_task(self, project_id, user_name=getpass.getuser(),):
         """
-
+        find all the tasks that are active for that user
         :param user_name:
         :return:
         """
@@ -57,8 +57,8 @@ class ShotgunCon:
             ['project', 'is', {'type': 'Project', 'id': project_id}],
             ['sg_status_list', 'in', task_status_list],
             ['task_assignees.HumanUser.id', 'is', user_id],
-
         ]
+
         fields = [
             'content', 'step', 'sg_status_list', 'task_assignees', 'start_date', 'due_date', 'entity', 'project',
             'entity.Shot.sg_sequence'
@@ -66,15 +66,20 @@ class ShotgunCon:
         active_task_data = self.__sg.find('Task', filters, fields)
         return active_task_data
 
-    def publish_tosg(self, name, path, task_id, proj_id):
-
+    def publish_tosg(self, details):
+        """
+        code to publish the file to the shotgrid webpage
+        :param details:
+        :return:
+        """
         Publish_data = {
-            'code': name.split('.')[0],
-            "task": {"type": "Task", "id": task_id},
-            'project': {'type': 'Project', 'id': proj_id}
+            'code': details['name'].split('.')[0],
+            'name': details['name'],
+            "task": {"type": "Task", "id": details['task_id']},
+            'project': {'type': 'Project', 'id': details['project_id']}
         }
         new_publish = self.__sg.create("PublishedFile", Publish_data)
-        self.__sg.upload("PublishedFile", new_publish["id"], path, field_name="path")
+        self.__sg.upload("PublishedFile", new_publish["id"], details['path'], field_name="path")
         print(new_publish)
         print("published")
 

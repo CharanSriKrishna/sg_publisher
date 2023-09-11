@@ -6,7 +6,7 @@ class GetPaths:
 
     def get_scene_path(self, shot_data):
         """
-
+        generating the scene path and the publish path
         :return:
         """
         prj_code = None
@@ -26,7 +26,7 @@ class GetPaths:
         if step:
             step_name = step.get('name')
 
-        print(self.root_path, prj_code, seq_name, shot_name, step_name)
+        #print(self.root_path, prj_code, seq_name, shot_name, step_name)
         self.scene_path = '{0}/{1}/sequences/{2}/{3}/{4}/work/silhouette/'.format(self.root_path, prj_code, seq_name,
                                                                              shot_name, step_name)
         self.publish_path = '{0}/{1}/sequences/{2}/{3}/{4}/publish/silhouette/'.format(self.root_path, prj_code, seq_name,
@@ -36,7 +36,7 @@ class GetPaths:
 
     def get_all_files(self, path):
         """
-        Function to get all the versions
+        Function to get all the versions that are published from this system
         :param path:
         :return:
         """

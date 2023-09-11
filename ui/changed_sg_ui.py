@@ -49,6 +49,13 @@ class Ui_MainWindow(object):
         __qtreewidgetitem = QTreeWidgetItem()
         __qtreewidgetitem.setText(0, f"Paths")
         self.task_details_treeWidget.setHeaderItem(__qtreewidgetitem)
+
+        self.work_path = QTreeWidgetItem(self.task_details_treeWidget)
+        self.work_path.setText(0, "Work Path")
+
+        self.publish_path = QTreeWidgetItem(self.task_details_treeWidget)
+        self.publish_path.setText(0, "Publish Path")
+
         self.task_details_treeWidget.setFont(font)
 
 
