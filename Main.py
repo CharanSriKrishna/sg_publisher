@@ -55,12 +55,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
 
         self.task_list_listWidget.clear()
-        self.work_path.clear()
-        self.publish_path.clear()
+        self.refresh_paths()
 
         self.proj_id = self.comboBox.currentData()
         sg_data = self.sg.find_active_task(self.comboBox.currentData(), user_name=self.user)
-        # pprint(sg_data)
+        pprint(sg_data)
 
         for task in sg_data:
 
@@ -89,6 +88,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             self.task_list_listWidget.setContextMenuPolicy(Qt.CustomContextMenu)
             self.task_list_listWidget.customContextMenuRequested.connect(self.open_context)
+
+    def refresh_paths(self):
+        self.task_details_treeWidget.clear()
+        self.work_path = QTreeWidgetItem(self.task_details_treeWidget)
+        self.work_path.setText(0, "Work Path")
+
+        self.publish_path = QTreeWidgetItem(self.task_details_treeWidget)
+        self.publish_path.setText(0, "Publish Path")
 
     def open_context(self, position):
         """
@@ -134,12 +141,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.task_id = item_data.get('id')
 
         # setting the path manually
-        self.path_cls = GetPaths('C:/Users/s8/OneDrive - Autodesk/Desktop/Publish')
+        self.path_cls = GetPaths('C:/Users/s8/OneDrive - Autodesk/Desktop/sg_publisher')
 
         paths = self.path_cls.get_scene_path(item_data)
 
-        self.work_path.clear()
-        self.publish_path.clear()
+        self.refresh_paths()
 
         if paths[0]:
             paths[0].sort(reverse=True)
@@ -204,6 +210,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             file.write("demo\n")
 
     def publish_version(self):
+        if self.recent_version is None:
+            QMessageBox.information(self, "Message", f"No Versions Found")
+            return
         file_name = 'demo_publish'
         publish = self.total_publishes+1
         if publish == 1:
